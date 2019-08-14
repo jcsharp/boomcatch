@@ -498,6 +498,12 @@ function handleRequest (log, path, referer, limit, origin, maxSize, validator, f
 
     response.setHeader('Access-Control-Allow-Origin', getAccessControlOrigin(request.headers, origin));
 
+    if (request.method === 'OPTIONS') {
+        response.statusCode = 200;
+        response.end();
+        return;
+    }
+
     state = {
         body: ''
     };
@@ -539,7 +545,7 @@ function getRemoteAddress (request) {
 }
 
 function checkRequest (log, path, referer, limit, requestPath, remoteAddress, request, response) {
-    if (request.method !== 'GET' && request.method !== 'POST') {
+    if (request.method !== 'GET' && request.method !== 'POST' && request.method !== 'OPTIONS') {
         fail(log, request, response, 405, 'Invalid method `' + request.method + '`');
         return false;
     }

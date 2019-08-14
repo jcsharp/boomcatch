@@ -1876,6 +1876,65 @@ suite('index:', function () {
                 });
             });
 
+            suite('OPTIONS request', function () {
+                var request, response;
+
+                setup(function () {
+                    request = {
+                        url: '/beacon',
+                        method: 'OPTIONS',
+                        headers: {
+                            referer: 'blah',
+                            'user-agent': 'oovavu'
+                        },
+                        on: spooks.fn({
+                            name: 'on',
+                            log: log
+                        }),
+                        socket: {
+                            remoteAddress: 'foo.bar',
+                            destroy: spooks.fn({
+                                name: 'destroy',
+                                log: log
+                            })
+                        }
+                    };
+                    response = spooks.obj({
+                        archetype: { setHeader: nop, end: nop },
+                        log: log
+                    });
+                    log.args.createServer[0][0](request, response);
+                });
+
+                teardown(function () {
+                    request = response = undefined;
+                });
+
+
+                test('response.setHeader was called once', function () {
+                    assert.strictEqual(log.counts.setHeader, 1);
+                });
+
+                test('response.setHeader was called correctly', function () {
+                    assert.strictEqual(log.these.setHeader[0], response);
+                    assert.lengthOf(log.args.setHeader[0], 2);
+                    assert.strictEqual(log.args.setHeader[0][0], 'Access-Control-Allow-Origin');
+                    assert.strictEqual(log.args.setHeader[0][1], '*');
+                });
+
+                test('request.socket.destroy was not called', function () {
+                    assert.strictEqual(log.counts.destroy, 0);
+                });
+
+                test('request.on was not called', function () {
+                    assert.strictEqual(log.counts.on, 0);
+                });
+
+                test('response.end was called once', function () {
+                    assert.strictEqual(log.counts.end, 1);
+                });
+            });
+
             suite('invalid POST request', function () {
                 var request, response;
 
@@ -2213,6 +2272,71 @@ suite('index:', function () {
                     test('request.socket.destroy was called once', function () {
                         assert.strictEqual(log.counts.destroy, 1);
                     });
+                });
+            });
+
+            suite('OPTIONS request', function () {
+                var request, response;
+
+                setup(function () {
+                    request = {
+                        url: '/foo/bar',
+                        method: 'OPTIONS',
+                        headers: {
+                            referer: 'foo.bar.baz.qux',
+                            origin: 'http://bar',
+                            'user-agent': 'wibble'
+                        },
+                        on: spooks.fn({
+                            name: 'on',
+                            log: log
+                        }),
+                        socket: {
+                            remoteAddress: 'foo.bar',
+                            destroy: spooks.fn({
+                                name: 'destroy',
+                                log: log
+                            })
+                        }
+                    };
+                    response = spooks.obj({
+                        archetype: { setHeader: nop, end: nop },
+                        log: log
+                    });
+                    log.args.createServer[0][0](request, response);
+                });
+
+                teardown(function () {
+                    request = response = undefined;
+                });
+
+                test('response.setHeader was called once', function () {
+                    assert.strictEqual(log.counts.setHeader, 1);
+                });
+
+                test('response.setHeader was called correctly', function () {
+                    assert.strictEqual(log.args.setHeader[0][0], 'Access-Control-Allow-Origin');
+                    assert.strictEqual(log.args.setHeader[0][1], 'http://bar');
+                });
+
+                test('request.socket.destroy was not called', function () {
+                    assert.strictEqual(log.counts.destroy, 0);
+                });
+
+                test('log.info was called once', function () {
+                    assert.strictEqual(log.counts.info, 2);
+                });
+
+                test('log.info was called correctly', function () {
+                    assert.strictEqual(log.args.info[1][0], 'referer=foo.bar.baz.qux user-agent=wibble address=foo.bar[] method=OPTIONS url=/foo/bar');
+                });
+
+                test('request.on was not called', function () {
+                    assert.strictEqual(log.counts.on, 0);
+                });
+
+                test('response.end was called once', function () {
+                    assert.strictEqual(log.counts.end, 1);
                 });
             });
 
