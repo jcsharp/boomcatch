@@ -695,11 +695,11 @@ function parseData (request, state) {
         state.body = state.body.substr(5);
     }
 
-    state.body = decodeURIComponent(state.body);
-
     if (request.headers['content-type'] === 'text/plain') {
         return JSON.parse(state.body);
     }
+
+    state.body = decodeURIComponent(state.body);
 
     return qs.parse(state.body, { parameterLimit: Infinity });
 }
